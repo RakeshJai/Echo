@@ -372,20 +372,20 @@
     hidePopup();
   }
 
-  // Play deep gong sound and show ambient glow
+  // Play bright, Apple-style notification sound and show ambient glow
   function playDingSound() {
     try {
-      console.log("Echo: Attempting to play gong sound");
-      // Create a deep, resonant gong sound using Web Audio API
+      console.log("Echo: Attempting to play bright notification sound");
+      // Create a bright, uplifting sound using Web Audio API
       const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContextCtor();
 
-      // Ensure context is running (needed for some browsers policy)
+      // Ensure context is running
       if (audioContext.state === 'suspended') {
         audioContext.resume();
       }
 
-      // Create oscillators for a rich gong sound
+      // Create oscillators for a pleasant chime
       const fundamental = audioContext.createOscillator();
       const harmonic1 = audioContext.createOscillator();
       const harmonic2 = audioContext.createOscillator();
@@ -394,41 +394,38 @@
       const harmonic1Gain = audioContext.createGain();
       const harmonic2Gain = audioContext.createGain();
 
-      // Connect oscillators to their gain nodes
+      // Connect nodes
       fundamental.connect(gainNode);
       harmonic1.connect(harmonic1Gain);
       harmonic2.connect(harmonic2Gain);
 
-      // Connect all gains to destination
       gainNode.connect(audioContext.destination);
       harmonic1Gain.connect(audioContext.destination);
       harmonic2Gain.connect(audioContext.destination);
 
-      // Deep gong frequencies
-      fundamental.frequency.value = 150;  // Deep fundamental
-      harmonic1.frequency.value = 225;    // Harmonic
-      harmonic2.frequency.value = 300;    // Higher harmonic
+      // Bright, pleasant frequencies (G5, D6, G6)
+      fundamental.frequency.value = 783.99; // G5
+      harmonic1.frequency.value = 1174.66;  // D6
+      harmonic2.frequency.value = 1567.98;  // G6
 
       fundamental.type = "sine";
       harmonic1.type = "sine";
       harmonic2.type = "sine";
 
-      // Gong envelope - quick attack, long decay
+      // Quick, uplifting envelope
       const now = audioContext.currentTime;
-      const duration = 1.5;
+      const duration = 0.6;
 
-      // Fundamental - loudest
-      gainNode.gain.setValueAtTime(0.4, now);
+      gainNode.gain.setValueAtTime(0.3, now);
       gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-      // Harmonics - quieter
-      harmonic1Gain.gain.setValueAtTime(0.25, now);
+      harmonic1Gain.gain.setValueAtTime(0.15, now);
       harmonic1Gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-      harmonic2Gain.gain.setValueAtTime(0.15, now);
+      harmonic2Gain.gain.setValueAtTime(0.1, now);
       harmonic2Gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-      // Start and stop all oscillators
+      // Start and stop
       fundamental.start(now);
       harmonic1.start(now);
       harmonic2.start(now);
