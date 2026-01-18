@@ -2,7 +2,7 @@
 // Handles secure communication with Gemini API
 // and manages API key storage
 
-console.log("Second Thought Background Service Worker Loaded");
+console.log("Echo Background Service Worker Loaded");
 
 // API Configuration
 const API_CONFIG = {
@@ -69,7 +69,7 @@ async function initializeStorage() {
     if (!result[API_CONFIG.API_KEY_STORAGE]) {
       console.log("Second Thought: No API key found in storage");
     } else {
-      console.log("Second Thought: API key loaded from storage");
+      console.log("Echo: API key loaded from storage");
     }
   } catch (error) {
     console.error("Second Thought: Error initializing storage", error);
@@ -175,8 +175,8 @@ async function analyzeDraft(draft, context) {
     const storageResult = await chrome.storage.local.get(["selected_model"]);
     const selectedModel = storageResult.selected_model || API_CONFIG.DEFAULT_MODEL;
 
-    console.log("Second Thought: Sending request to OpenRouter API");
-    console.log("Second Thought: Using model:", selectedModel);
+    console.log("Echo: Sending request to OpenRouter API");
+    console.log("Echo: Using model:", selectedModel);
 
     // Build context string with conversation history (limit to avoid token limits)
     const limitedContext = context.slice(-5); // Only last 5 messages
@@ -215,7 +215,7 @@ Remember: Return ONLY valid JSON, no markdown formatting, no code blocks.`
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
         "HTTP-Referer": chrome.runtime.getURL(""),
-        "X-Title": "Second Thought Extension"
+        "X-Title": "Echo Extension"
       },
       body: JSON.stringify(requestBody),
       signal: controller.signal
@@ -234,10 +234,10 @@ Remember: Return ONLY valid JSON, no markdown formatting, no code blocks.`
         errorData = { raw: errorText };
       }
 
-      console.error("Second Thought: API error - Status:", response.status);
-      console.error("Second Thought: API error - Status Text:", response.statusText);
-      console.error("Second Thought: API error - Response:", errorText);
-      console.error("Second Thought: API error - Parsed:", JSON.stringify(errorData, null, 2));
+      console.error("Echo: API error - Status:", response.status);
+      console.error("Echo: API error - Status Text:", response.statusText);
+      console.error("Echo: API error - Response:", errorText);
+      console.error("Echo: API error - Parsed:", JSON.stringify(errorData, null, 2));
 
       const errorMessage = errorData.error?.message ||
         errorData.message ||
@@ -343,7 +343,7 @@ Remember: Return ONLY valid JSON, no markdown formatting, no code blocks.`
 
 // Message listener
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("Second Thought: Message received", request);
+  console.log("Echo: Message received", request);
 
   (async () => {
     try {
@@ -381,5 +381,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // Initialize
-console.log("Second Thought: Initializing background service worker");
+console.log("Echo: Initializing background service worker");
 initializeStorage();

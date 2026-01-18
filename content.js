@@ -4,7 +4,7 @@
 // Version: 2.0 - Enhanced with emoji popup and emotion detection
 
 (function () {
-  console.log("Second Thought Content Script Loaded");
+  console.log("Echo Content Script Loaded");
 
   // Configuration
   const CONFIG = {
@@ -14,8 +14,8 @@
       CONTEXT_LIMIT: 10
     },
     DISCORD: {
-      DRAFT_SELECTOR: '[class*="slateTextArea-"][role="textbox"]',
-      MESSAGE_SELECTOR: '[id^="message-content-"], [class*="messageContent-"]',
+      DRAFT_SELECTOR: '[role="textbox"][contenteditable="true"], [data-slate-editor="true"], [class*="textArea-"] [role="textbox"]',
+      MESSAGE_SELECTOR: '[class*="messageContent-"], [id^="message-content-"], li[class*="message-"] [class*="markup-"]',
       CONTEXT_LIMIT: 10
     },
     DEBOUNCE_TIME: 1000 // ms
@@ -162,6 +162,8 @@
 
     if (platform === "WHATSAPP") {
       draftElement = findWhatsAppInput();
+    } else if (platform === "DISCORD") {
+      draftElement = findDiscordInput();
     } else {
       const config = getConfig();
       draftElement = document.querySelector(config.DRAFT_SELECTOR);
@@ -187,8 +189,14 @@
 
   // Get draft element position for popup placement
   function getDraftElementPosition() {
-    const config = getConfig();
-    const draftElement = document.querySelector(config.DRAFT_SELECTOR);
+    let draftElement = null;
+    if (platform === "WHATSAPP") {
+      draftElement = findWhatsAppInput();
+    } else if (platform === "DISCORD") {
+      draftElement = findDiscordInput();
+    } else {
+      draftElement = document.querySelector(getConfig().DRAFT_SELECTOR);
+    }
 
     if (!draftElement) {
       return null;
@@ -240,7 +248,7 @@
 
     document.body.appendChild(popup);
     popupElement = popup;
-    console.log("Second Thought: Popup element created and added to DOM");
+    console.log("Echo: Popup element created and added to DOM");
     return popup;
   }
 
@@ -590,9 +598,9 @@
   // Handle analysis response
   function handleAnalysisResponse(response) {
     if (!response || response.type === "ERROR") {
-      console.error("Second Thought: Analysis error");
-      console.error("Second Thought: Error type:", response?.errorType);
-      console.error("Second Thought: Error message:", response?.message);
+      console.error("Echo: Analysis error");
+      console.error("Echo: Error type:", response?.errorType);
+      console.error("Echo: Error message:", response?.message);
 
       // Show user-friendly error message
       let errorMsg = "Analysis failed";
@@ -659,6 +667,48 @@
         sendForAnalysis(newDraft, context);
       }
     }, CONFIG.DEBOUNCE_TIME);
+  }
+
+  // Find Discord input element with multiple strategies
+  function findDiscordInput() {
+    const selectors = [
+      'div[class*="textArea-"] [role="textbox"]',
+      'div[aria-label^="Message #"]',
+      'div[aria-label^="Message @"]',
+      'div[aria-label^="Message in"]',
+      '[data-slate-editor="true"]',
+      '[role="textbox"][contenteditable="true"]',
+      'div[class*="slateTextArea-"]'
+    ];
+
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        // Ensure it's not a hidden or irrelevant element
+        if (el.offsetParent !== null || el.getClientRects().length > 0) {
+          return el;
+        }
+      }
+    }
+
+    // fallback: look for ANY contenteditable in the main area
+    const mainArea = document.querySelector('main, [class*="chat-"]');
+    if (mainArea) {
+      const allEditable = mainArea.querySelectorAll('[contenteditable="true"], [role="textbox"]');
+      for (const el of allEditable) {
+        if (el.offsetParent !== null || el.getClientRects().length > 0) return el;
+      }
+    }
+
+    // Fallback to active element if it's a textbox or in a chat area
+    if (document.activeElement &&
+      (document.activeElement.getAttribute('role') === 'textbox' ||
+        document.activeElement.getAttribute('data-slate-editor') === 'true' ||
+        document.activeElement.contentEditable === "true")) {
+      return document.activeElement;
+    }
+
+    return null;
   }
 
   // Find WhatsApp input element with multiple strategies
@@ -741,7 +791,7 @@
         // Only search if we don't have a valid draft element
         // Check if we lost the element
         if (draftElement && !document.body.contains(draftElement)) {
-          console.log("Second Thought: Lost draft element (chat switch?), resetting...");
+          console.log("Echo: Lost draft element (chat switch?), resetting...");
           draftElement = null;
           inputHandlerAttached = false;
         }
@@ -750,6 +800,8 @@
         if (!draftElement) {
           if (platform === "WHATSAPP") {
             draftElement = findWhatsAppInput();
+          } else if (platform === "DISCORD") {
+            draftElement = findDiscordInput();
           } else {
             draftElement = document.querySelector(getConfig().DRAFT_SELECTOR);
           }
@@ -771,6 +823,8 @@
     const findAndAttach = () => {
       if (platform === "WHATSAPP") {
         draftElement = findWhatsAppInput();
+      } else if (platform === "DISCORD") {
+        draftElement = findDiscordInput();
       } else {
         draftElement = document.querySelector(getConfig().DRAFT_SELECTOR);
       }
@@ -785,6 +839,7 @@
     };
 
     // Start looking for the input element
+    console.log("Echo: Starting input detection...");
     setTimeout(findAndAttach, 500);
     setTimeout(findAndAttach, 2000);
     setTimeout(findAndAttach, 5000);
@@ -807,6 +862,7 @@
 
     // Only set up observers if platform is supported
     if (platform) {
+      console.log(`Echo: Initializing for ${platform}`);
       // Create popup and modal elements
       createPopup();
       createModal();
@@ -815,10 +871,9 @@
       setTimeout(() => {
         const testPopup = document.querySelector(".second-thought-popup");
         if (testPopup) {
-          console.log("Second Thought: Popup element exists in DOM");
-          console.log("Second Thought: Popup styles:", window.getComputedStyle(testPopup).display);
+          console.log("Echo: Popup element exists in DOM");
         } else {
-          console.error("Second Thought: Popup element NOT found in DOM!");
+          console.error("Echo: Popup element NOT found in DOM!");
         }
       }, 1000);
 
@@ -835,5 +890,4 @@
 
   // Start the content script
   init();
-
 })(); // Close the IIFE
