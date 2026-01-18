@@ -376,7 +376,7 @@
   function playDingSound() {
     try {
       console.log("Echo: Attempting to play gong sound");
-      // Create a soft, calming raindrop sound using Web Audio API
+      // Create a deep, resonant gong sound using Web Audio API
       const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContextCtor();
 
@@ -385,56 +385,57 @@
         audioContext.resume();
       }
 
-      // Create oscillators for a water drop sound
-      const dropTone = audioContext.createOscillator();
-      const dropHarmonic = audioContext.createOscillator();
+      // Create oscillators for a rich gong sound
+      const fundamental = audioContext.createOscillator();
+      const harmonic1 = audioContext.createOscillator();
+      const harmonic2 = audioContext.createOscillator();
 
       const gainNode = audioContext.createGain();
-      const harmonicGain = audioContext.createGain();
+      const harmonic1Gain = audioContext.createGain();
+      const harmonic2Gain = audioContext.createGain();
 
-      // Add a subtle filter for more natural sound
-      const filter = audioContext.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 2000;
-      filter.Q.value = 1;
+      // Connect oscillators to their gain nodes
+      fundamental.connect(gainNode);
+      harmonic1.connect(harmonic1Gain);
+      harmonic2.connect(harmonic2Gain);
 
-      // Connect nodes
-      dropTone.connect(gainNode);
-      dropHarmonic.connect(harmonicGain);
-      gainNode.connect(filter);
-      harmonicGain.connect(filter);
-      filter.connect(audioContext.destination);
+      // Connect all gains to destination
+      gainNode.connect(audioContext.destination);
+      harmonic1Gain.connect(audioContext.destination);
+      harmonic2Gain.connect(audioContext.destination);
 
-      // Water drop frequencies - high pitch that drops quickly
-      dropTone.frequency.setValueAtTime(1200, audioContext.currentTime);
-      dropTone.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+      // Deep gong frequencies
+      fundamental.frequency.value = 150;  // Deep fundamental
+      harmonic1.frequency.value = 225;    // Harmonic
+      harmonic2.frequency.value = 300;    // Higher harmonic
 
-      dropHarmonic.frequency.setValueAtTime(1800, audioContext.currentTime);
-      dropHarmonic.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+      fundamental.type = "sine";
+      harmonic1.type = "sine";
+      harmonic2.type = "sine";
 
-      dropTone.type = "sine";
-      dropHarmonic.type = "sine";
-
-      // Gentle envelope - quick attack, soft decay
+      // Gong envelope - quick attack, long decay
       const now = audioContext.currentTime;
-      const duration = 0.4;
+      const duration = 1.5;
 
-      // Main drop tone
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+      // Fundamental - loudest
+      gainNode.gain.setValueAtTime(0.4, now);
       gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-      // Harmonic - quieter
-      harmonicGain.gain.setValueAtTime(0, now);
-      harmonicGain.gain.linearRampToValueAtTime(0.15, now + 0.01);
-      harmonicGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      // Harmonics - quieter
+      harmonic1Gain.gain.setValueAtTime(0.25, now);
+      harmonic1Gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-      // Start and stop
-      dropTone.start(now);
-      dropHarmonic.start(now);
+      harmonic2Gain.gain.setValueAtTime(0.15, now);
+      harmonic2Gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
 
-      dropTone.stop(now + duration);
-      dropHarmonic.stop(now + duration);
+      // Start and stop all oscillators
+      fundamental.start(now);
+      harmonic1.start(now);
+      harmonic2.start(now);
+
+      fundamental.stop(now + duration);
+      harmonic1.stop(now + duration);
+      harmonic2.stop(now + duration);
 
       // Trigger ambient glow
       showAmbientGlow();
