@@ -215,6 +215,58 @@
     };
   }
 
+  // Apply suggestion to chat input
+  function applySuggestion(text) {
+    if (!text) return;
+
+    let inputEl = null;
+    if (platform === "WHATSAPP") {
+      inputEl = findWhatsAppInput();
+    } else if (platform === "DISCORD") {
+      inputEl = findDiscordInput();
+    }
+
+    if (!inputEl) {
+      console.error("Echo: Could not find input element to apply suggestion");
+      return;
+    }
+
+    try {
+      // Focus the input first
+      inputEl.focus();
+
+      // Use execCommand to preserve the editor's internal state (Undo/Redo support)
+      // First clear the existing text
+      document.execCommand('selectAll', false, null);
+      document.execCommand('delete', false, null);
+
+      // Then insert the new text
+      document.execCommand('insertText', false, text);
+
+      // Dispatch events to ensure the platform knows the content changed
+      const events = ['input', 'change', 'blur'];
+      events.forEach(type => {
+        const event = new Event(type, { bubbles: true });
+        inputEl.dispatchEvent(event);
+      });
+
+      console.log("Echo: Suggestion applied to input");
+
+      // Close the modal after applying
+      if (modalElement) {
+        modalElement.classList.add("hidden");
+      }
+
+      // Small confirmation popup
+      showPopup("✅", "Applied!", true);
+    } catch (error) {
+      console.error("Echo: Error applying suggestion", error);
+      // Fallback: direct manipulation (less reliable for complex editors)
+      inputEl.textContent = text;
+      inputEl.innerText = text;
+    }
+  }
+
   // Create emoji popup element
   function createPopup() {
     if (popupElement && document.body.contains(popupElement)) {
@@ -300,12 +352,23 @@
             <div class="echo-message-box" id="modal-draft">No message</div>
           </div>
           <div class="echo-modal-section" id="modal-improved-section" style="display: none;">
-            <div class="echo-modal-section-title">Suggestion</div>
-            <div class="echo-suggestion-box" id="modal-improved">No suggestion</div>
+            <div class="echo-modal-section-title">Suggestion (Click to use)</div>
+            <div class="echo-suggestion-box" id="modal-improved" title="Click to apply this suggestion to your chat">No suggestion</div>
           </div>
         </div>
       </div>
     `;
+
+    // Click handler for suggestion
+    const improvedBox = overlay.querySelector("#modal-improved");
+    if (improvedBox) {
+      improvedBox.addEventListener("click", () => {
+        const text = improvedBox.textContent;
+        if (text && text !== "No suggestion") {
+          applySuggestion(text);
+        }
+      });
+    }
 
     // Close handlers
     const closeBtn = overlay.querySelector(".echo-modal-close");

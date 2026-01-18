@@ -31,7 +31,7 @@ Your task:
 
 5. Provide a detailed perception analysis of how the recipient will interpret this message
 
-6. If the message could be improved, suggest a more mindful version
+6. If the message could be improved, suggest a more mindful version. CRITICAL: The "improved_draft" field MUST contain ONLY the message text itself, ready to be sent, with no quotes, preamble, or explanation.
 
 IMPORTANT: Return ONLY a valid JSON object with this exact structure (no markdown, no code blocks, just pure JSON):
 {
@@ -41,7 +41,7 @@ IMPORTANT: Return ONLY a valid JSON object with this exact structure (no markdow
   "tone": "<description of tone>",
   "recipient_feeling": "<how recipient might feel>",
   "perception_analysis": "<detailed analysis of how recipient will perceive this>",
-  "improved_draft": "<improved version if needed, or same as original if fine>",
+  "improved_draft": "<improved version if needed, or same as original if fine. MESSAGE TEXT ONLY.>",
   "has_significant_emotion": <true if emotion is significant/negative, false if neutral/positive>
 }`
 };
