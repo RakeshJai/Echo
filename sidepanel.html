@@ -10,15 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #3a3a3a;
-      --primary-glow: rgba(58, 58, 58, 0.5);
-      --secondary: #2a2a2a;
-      --bg-dark: #1a1a1a;
-      --bg-card: rgba(42, 42, 42, 0.7);
+      --primary: #6b6b6b;
+      --primary-glow: rgba(107, 107, 107, 0.5);
+      --secondary: #4a4a4a;
+      --bg-dark: #1c1c1c;
+      --bg-card: rgba(50, 50, 50, 0.7);
       --text-main: #e8e8e8;
       --text-dim: #9a9a9a;
       --border: rgba(255, 255, 255, 0.08);
-      --accent-gradient: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+      --accent-gradient: linear-gradient(135deg, #6b6b6b 0%, #4a4a4a 100%);
     }
 
     * {
@@ -31,8 +31,8 @@
       font-family: 'Outfit', sans-serif;
       background-color: var(--bg-dark);
       background-image:
-        radial-gradient(circle at 0% 0%, rgba(58, 58, 58, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 100% 100%, rgba(42, 42, 42, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 0% 0%, rgba(107, 107, 107, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(74, 74, 74, 0.06) 0%, transparent 50%);
       color: var(--text-main);
       min-height: 100vh;
       overflow-x: hidden;
@@ -60,11 +60,11 @@
       }
 
       70% {
-        box-shadow: 0 0 0 15px rgba(58, 58, 58, 0);
+        box-shadow: 0 0 0 15px rgba(107, 107, 107, 0);
       }
 
       100% {
-        box-shadow: 0 0 0 0 rgba(58, 58, 58, 0);
+        box-shadow: 0 0 0 0 rgba(107, 107, 107, 0);
       }
     }
 
@@ -101,15 +101,21 @@
     .logo-container {
       width: 80px;
       height: 80px;
-      background: var(--accent-gradient);
+      background: transparent;
       border-radius: 22px;
       margin: 0 auto 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 40px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
       animation: float 4s ease-in-out infinite;
+    }
+
+    .logo-container img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      filter: brightness(1.2);
     }
 
     .header h1 {
@@ -159,7 +165,7 @@
     }
 
     .card:hover {
-      border-color: rgba(58, 58, 58, 0.3);
+      border-color: rgba(107, 107, 107, 0.3);
       transform: translateY(-2px);
     }
 
@@ -207,7 +213,7 @@
       outline: none;
       border-color: var(--primary);
       background: rgba(15, 23, 42, 0.8);
-      box-shadow: 0 0 0 4px rgba(58, 58, 58, 0.15);
+      box-shadow: 0 0 0 4px rgba(107, 107, 107, 0.15);
     }
 
     select.input-field {
@@ -240,12 +246,12 @@
     .btn-primary {
       background: var(--accent-gradient);
       color: white;
-      box-shadow: 0 8px 20px rgba(58, 58, 58, 0.3);
+      box-shadow: 0 8px 20px rgba(107, 107, 107, 0.3);
     }
 
     .btn-primary:hover {
       transform: translateY(-3px);
-      box-shadow: 0 12px 25px rgba(58, 58, 58, 0.4);
+      box-shadow: 0 12px 25px rgba(107, 107, 107, 0.4);
       filter: brightness(1.1);
     }
 
@@ -304,7 +310,7 @@
       width: 24px;
       height: 24px;
       min-width: 24px;
-      background: rgba(58, 58, 58, 0.1);
+      background: rgba(107, 107, 107, 0.1);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -382,7 +388,9 @@
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo-container">🔊</div>
+      <div class="logo-container">
+        <img src="icons/logo.png" alt="Echo Logo">
+      </div>
       <h1>Echo</h1>
       <p>Hear What They'll Feel</p>
     </div>
