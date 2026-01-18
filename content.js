@@ -14,9 +14,9 @@
       CONTEXT_LIMIT: 10
     },
     DISCORD: {
-      DRAFT_SELECTOR: '[role="textbox"][contenteditable="true"], [data-slate-editor="true"], [class*="textArea-"] [role="textbox"]',
-      MESSAGE_SELECTOR: '[class*="messageContent-"], [id^="message-content-"], li[class*="message-"] [class*="markup-"]',
-      CONTEXT_LIMIT: 10
+      DRAFT_SELECTOR: '[role="textbox"][contenteditable="true"], [data-slate-editor="true"], [class*="textArea-"] [role="textbox"], [aria-label^="Message"]',
+      MESSAGE_SELECTOR: '[class*="messageContent-"], [id^="message-content-"], li[class*="message-"] [class*="markup-"], [class*="textContainer-"]',
+      CONTEXT_LIMIT: 12
     },
     DEBOUNCE_TIME: 1000 // ms
   };
@@ -108,18 +108,18 @@
 
         // For Discord, try to determine sender
         if (platform === "DISCORD") {
-          const messageRow = el.closest('[class*="message-"]');
+          const messageRow = el.closest('[class*="message-"], [class*="messageListItem-"]');
           if (messageRow) {
             // Find the author element
             // Discord uses [class*="username-"] for the actual name
-            let authorEl = messageRow.querySelector('[class*="username-"]');
+            let authorEl = messageRow.querySelector('[class*="username-"], [class*="author-"]');
 
             // If no author element (grouped message), look up previous siblings
             if (!authorEl) {
               let prev = messageRow.previousElementSibling;
               let depth = 0;
-              while (prev && !authorEl && depth < 30) { // Increased depth for busy chats
-                authorEl = prev.querySelector('[class*="username-"]');
+              while (prev && !authorEl && depth < 40) { // Increased depth for busy chats
+                authorEl = prev.querySelector('[class*="username-"], [class*="author-"]');
                 prev = prev.previousElementSibling;
                 depth++;
               }
@@ -129,11 +129,11 @@
               const authorName = authorEl.textContent.trim();
 
               // Get current user's name (Me)
-              // Discord stores this in multiple places, try to find the most reliable one
               const meEl = document.querySelector('[class*="nameTag-"] [class*="username-"]') ||
                 document.querySelector('[class*="accountProfileCard-"] [class*="username-"]') ||
                 document.querySelector('[class*="panel-"] [class*="text-"] div') ||
-                document.querySelector('[class*="container-"] [class*="avatar-"] + div [class*="username-"]');
+                document.querySelector('[class*="container-"] [class*="avatar-"] + div [class*="username-"]') ||
+                document.querySelector('[class*="userProfileInner-"] [class*="nickname-"]');
 
               const meName = meEl?.textContent.trim();
 
@@ -174,9 +174,11 @@
     }
 
     // Handle contenteditable elements
-    if (draftElement.contentEditable === "true") {
-      const text = draftElement.textContent?.trim() || draftElement.innerText?.trim() || "";
-      return text;
+    if (draftElement.contentEditable === "true" || draftElement.getAttribute('contenteditable') === 'true') {
+      // In Slate, sometimes we need to join text of children
+      const text = draftElement.innerText || draftElement.textContent || "";
+      // Strip any leading/trailing zero-width spaces and other invisible characters often found in chat inputs
+      return text.replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
     }
 
     // Handle input/textarea elements
@@ -686,12 +688,14 @@
   function findDiscordInput() {
     const selectors = [
       'div[class*="textArea-"] [role="textbox"]',
+      '[class*="slateTextArea-"]',
+      '[data-slate-editor="true"]',
       'div[aria-label^="Message #"]',
       'div[aria-label^="Message @"]',
       'div[aria-label^="Message in"]',
-      '[data-slate-editor="true"]',
+      'div[aria-label^="Message"]',
       '[role="textbox"][contenteditable="true"]',
-      'div[class*="slateTextArea-"]'
+      '[aria-multiline="true"][contenteditable="true"]'
     ];
 
     for (const selector of selectors) {
@@ -699,6 +703,7 @@
       if (el) {
         // Ensure it's not a hidden or irrelevant element
         if (el.offsetParent !== null || el.getClientRects().length > 0) {
+          console.log(`Echo: Found Discord input with selector: ${selector}`);
           return el;
         }
       }
