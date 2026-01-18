@@ -372,10 +372,10 @@
     hidePopup();
   }
 
-  // Play gentle raindrop sound and show ambient glow
+  // Play deep gong sound and show ambient glow
   function playDingSound() {
     try {
-      console.log("Echo: Attempting to play raindrop sound");
+      console.log("Echo: Attempting to play gong sound");
       // Create a soft, calming raindrop sound using Web Audio API
       const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
       const audioContext = new AudioContextCtor();
