@@ -28,6 +28,7 @@
   let modalElement = null;
   let currentAnalysis = null;
   let popupHideTimeout = null;
+  let isApplyingSuggestion = false; // Flag to prevent analysis loops
 
   // Detect platform
   function detectPlatform() {
@@ -217,7 +218,7 @@
 
   // Apply suggestion to chat input
   function applySuggestion(text) {
-    if (!text) return;
+    if (!text || isApplyingSuggestion) return;
 
     let inputEl = null;
     if (platform === "WHATSAPP") {
@@ -232,46 +233,67 @@
     }
 
     try {
-      // Focus the input first
+      isApplyingSuggestion = true;
+      console.log("Echo: Applying suggestion with Slate-compatible method...");
+
+      // 1. Focus the input
       inputEl.focus();
 
-      // Update state BEFORE triggering events to prevent re-analysis
-      currentDraft = text;
+      // 2. Select everything the DOM way (more reliable for React/Slate)
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(inputEl);
+      selection.removeAllRanges();
+      selection.addRange(range);
 
-      // Use execCommand to preserve the editor's internal state (Undo/Redo support)
-      // First select all to replace the entire content
-      document.execCommand('selectAll', false, null);
+      // 3. Clear existing text via standard execCommand
+      document.execCommand('delete', false, null);
 
-      // Then insert the new text (this replaces the selection)
-      document.execCommand('insertText', false, text);
-
-      // Dispatch events to ensure the platform knows the content changed
-      const events = ['input', 'change'];
-      events.forEach(type => {
-        const event = new Event(type, { bubbles: true });
-        inputEl.dispatchEvent(event);
+      // 4. Prepare 'beforeinput' event (This is what Slate/Discord listens for)
+      const dataTransfer = new DataTransfer();
+      dataTransfer.setData('text/plain', text);
+      const beforeInputEvent = new InputEvent('beforeinput', {
+        inputType: 'insertFromPaste',
+        dataTransfer: dataTransfer,
+        bubbles: true,
+        cancelable: true,
       });
 
-      console.log("Echo: Suggestion applied to input. State updated to prevent loop.");
-
-      // Close the modal and hide all popups immediately
-      if (modalElement) {
-        modalElement.classList.add("hidden");
+      // 5. Dispatch and then insert
+      if (inputEl.dispatchEvent(beforeInputEvent)) {
+        document.execCommand('insertText', false, text);
       }
-      hidePopup();
 
-      // Show a very brief confirmation that doesn't trigger analysis
+      // 6. Update internal state immediately to prevent re-triggering
+      currentDraft = text;
+
+      // 7. Dispatch final events so the site knows we're done
+      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+      inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // 8. Move cursor to end of the new text
+      const finalRange = document.createRange();
+      finalRange.selectNodeContents(inputEl);
+      finalRange.collapse(false); // true for start, false for end
+      selection.removeAllRanges();
+      selection.addRange(finalRange);
+
+      // 9. UI Cleanup
+      if (modalElement) modalElement.classList.add("hidden");
+      hidePopup();
       showPopup("✅", "Applied!", true);
 
-      // Ensure currentDraft is perfectly matched to what extractDraft will see
+      // 10. Unlock after a short delay to allow DOM to settle
       setTimeout(() => {
+        isApplyingSuggestion = false;
         currentDraft = extractDraft();
-      }, 100);
+        console.log("Echo: Suggestion applied and editor unlocked.");
+      }, 500);
 
     } catch (error) {
       console.error("Echo: Error applying suggestion", error);
-      // Fallback: direct manipulation (less reliable for complex editors)
-      inputEl.textContent = text;
+      isApplyingSuggestion = false;
+      // Last resort fallback
       inputEl.innerText = text;
     }
   }
@@ -733,6 +755,11 @@
   function debouncedAnalysis() {
     if (debounceTimer) {
       clearTimeout(debounceTimer);
+    }
+
+    // Skip analysis if we are currently mid-injection
+    if (isApplyingSuggestion) {
+      return;
     }
 
     debounceTimer = setTimeout(() => {
