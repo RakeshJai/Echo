@@ -564,6 +564,13 @@
       }, 2000);
     }, 15000);
 
+    // Safety check for extension context
+    if (!chrome.runtime || !chrome.runtime.id) {
+      console.warn("Echo: Extension context invalidated. Please refresh the page.");
+      showPopup("🔄", "Please Refresh Tab");
+      return;
+    }
+
     chrome.runtime.sendMessage({
       action: "ANALYZE_DRAFT",
       payload: {
@@ -575,17 +582,23 @@
       clearTimeout(timeoutId);
 
       if (chrome.runtime.lastError) {
-        console.error("Second Thought: Runtime error", chrome.runtime.lastError);
-        showPopup("❌", "Error");
+        // Handle the 'Extension context invalidated' error gracefully
+        if (chrome.runtime.lastError.message.includes("context invalidated")) {
+          console.warn("Echo: Connection lost due to extension update. Please refresh.");
+          showPopup("🔄", "Please Refresh Tab");
+        } else {
+          console.error("Echo: Runtime error", chrome.runtime.lastError);
+          showPopup("❌", "Error");
+        }
         setTimeout(() => {
           hidePopup();
-        }, 2000);
+        }, 3000);
       } else {
-        console.log("Second Thought: Analysis response received", response);
+        console.log("Echo: Analysis response received", response);
         if (response) {
           handleAnalysisResponse(response);
         } else {
-          console.error("Second Thought: No response received");
+          console.error("Echo: No response received");
           showPopup("❌", "No Response");
           setTimeout(() => {
             hidePopup();
