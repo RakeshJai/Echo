@@ -343,7 +343,8 @@ Remember: Return ONLY valid JSON, no markdown formatting, no code blocks.`
 
 // Message listener
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("Echo: Message received", request);
+  // Avoid logging message payloads, which can include API keys and private drafts.
+  console.log("Echo: Message received", request.action);
 
   (async () => {
     try {

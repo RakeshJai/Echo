@@ -66,7 +66,7 @@ async function loadSettings() {
       ELEMENTS.apiKeyInput.placeholder = "Custom Key Active";
       showStatus("Neural config synchronized.", "success");
     } else {
-      showStatus("Using standard model access.", "info");
+      showStatus("Add an OpenRouter API key to enable analysis.", "info");
     }
 
     // Model Selection State
@@ -90,10 +90,13 @@ async function saveSettings() {
   try {
     // 1. Save API Key via background script if entered
     if (apiKey) {
-      await chrome.runtime.sendMessage({
+      const result = await chrome.runtime.sendMessage({
         action: "API_KEY_SAVED",
         payload: { apiKey }
       });
+      if (!result?.success) {
+        throw new Error(result?.error || "Could not save the OpenRouter API key.");
+      }
       ELEMENTS.apiKeyInput.value = "";
       ELEMENTS.apiKeyInput.placeholder = "Custom Key Active";
     }
